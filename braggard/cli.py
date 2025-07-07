@@ -48,9 +48,15 @@ def analyze_cmd(data_dir: str | None) -> None:
 
 
 @main.command()
-def render_cmd() -> None:
+@click.option(
+    "--output-dir",
+    default="docs",
+    type=click.Path(),
+    help="Directory for rendered site",
+)
+def render_cmd(output_dir: str) -> None:
     """Render static site."""
-    render()
+    render(output_dir=output_dir)
 
 
 @main.command()

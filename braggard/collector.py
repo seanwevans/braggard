@@ -26,11 +26,16 @@ def _request(query: str, variables: dict[str, str | None], token: str | None) ->
     )
     try:
         with urllib.request.urlopen(req) as resp:  # type: ignore[attr-defined]
-            return json.load(resp)
+            data = json.load(resp)
     except (HTTPError, URLError) as exc:  # pragma: no cover - network errors
         msg = f"Request to GitHub failed: {exc}"
         logging.error(msg)
         raise RuntimeError(msg) from exc
+    if isinstance(data, dict) and data.get("errors"):
+        msg = f"GitHub API errors: {data['errors']}"
+        logging.error(msg)
+        raise RuntimeError(msg)
+    return data
 
 
 def collect(

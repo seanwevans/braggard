@@ -1,16 +1,21 @@
 import subprocess
+import pytest
 import braggard.deployer as d
 
 
 def test_deploy_runs_commands(monkeypatch):
     calls = []
 
-    def fake_run(cmd, check=False):
+    def fake_run(cmd, capture_output=True, text=True):
         calls.append(cmd)
 
         class R:
-            returncode = 1 if cmd[:3] == ["git", "switch", "gh-pages"] else 0
+            def __init__(self, rc=0, stderr=""):
+                self.returncode = rc
+                self.stderr = stderr
 
+        if cmd[:3] == ["git", "switch", "gh-pages"]:
+            return R(1, "fatal")
         return R()
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -19,3 +24,20 @@ def test_deploy_runs_commands(monkeypatch):
     assert ["git", "fetch"] in calls
     assert ["git", "switch", "-c", "gh-pages"] in calls
     assert ["git", "push", "origin", "gh-pages"] in calls
+
+
+def test_deploy_raises_on_failure(monkeypatch):
+    def fail_run(cmd, capture_output=True, text=True):
+        class R:
+            def __init__(self, rc=0, stderr=""):
+                self.returncode = rc
+                self.stderr = stderr
+
+        if cmd[:2] == ["git", "push"]:
+            return R(1, "boom")
+        return R()
+
+    monkeypatch.setattr(subprocess, "run", fail_run)
+
+    with pytest.raises(RuntimeError):
+        d.deploy()
