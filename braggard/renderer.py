@@ -37,8 +37,8 @@ HTML_TEMPLATE = Template(
 )
 
 
-def render() -> None:
-    """Render ``summary.json`` into ``docs/index.html``."""
+def render(output_dir: str = "docs") -> None:
+    """Render ``summary.json`` into ``output_dir/index.html``."""
 
     if not os.path.exists("summary.json"):
         raise FileNotFoundError("Run `braggard analyze` first")
@@ -46,7 +46,7 @@ def render() -> None:
     with open("summary.json", "r", encoding="utf-8") as f:
         summary = json.load(f)
 
-    os.makedirs("docs", exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     output = HTML_TEMPLATE.render(summary=summary)
-    with open(os.path.join("docs", "index.html"), "w", encoding="utf-8") as f:
+    with open(os.path.join(output_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(output)
