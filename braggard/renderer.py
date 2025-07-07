@@ -50,4 +50,3 @@ def render() -> None:
     output = HTML_TEMPLATE.render(summary=summary)
     with open(os.path.join("docs", "index.html"), "w", encoding="utf-8") as f:
         f.write(output)
-
