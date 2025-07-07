@@ -49,6 +49,23 @@ Or simply enable the supplied **GitHub Action** (`.github/workflows/braggard.yml
 
 ---
 
+## 🛠 Development
+
+Install the development requirements and install the project in editable mode:
+
+```bash
+pip install -r requirements-dev.txt
+pip install -e .
+```
+
+Run tests with `pytest` or use the pre‑commit hooks:
+
+```bash
+pre-commit run --all-files
+```
+
+---
+
 ## ❤️ Contributing
 
 Pull‑requests are welcome! See [CONTRIBUTING](./CONTRIBUTING.md).
