@@ -7,6 +7,8 @@ import json
 import os
 import urllib.request
 
+from .config import load_config
+
 
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
 
@@ -26,17 +28,27 @@ def _request(query: str, variables: dict[str, str | None], token: str | None) ->
 
 def collect(
     *,
-    user: str,
+    user: str | None = None,
     token: str | None = None,
-    include_private: bool = False,
+    include_private: bool | None = None,
     since: str | None = None,
 ) -> None:
     """Fetch repository metadata and store raw JSON snapshots.
 
     Parameters mirror the CLI. ``include_private`` only takes effect when a
     ``token`` with appropriate scopes is supplied. ``since`` filters repositories
-    by ``pushed_at`` timestamp when provided.
+    by ``pushed_at`` timestamp when provided. ``user`` and ``include_private``
+    default to values from ``braggard.toml`` when omitted.
     """
+
+    if user is None or include_private is None:
+        cfg = load_config()
+        if user is None:
+            user = cfg.get("user", {}).get("handle")
+        if include_private is None:
+            include_private = cfg.get("user", {}).get("include_private", False)
+    if user is None:
+        raise ValueError("user must be provided")
 
     repo_query = """
     query($login: String!, $after: String) {
