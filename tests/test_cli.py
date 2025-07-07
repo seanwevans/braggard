@@ -60,6 +60,7 @@ def test_cli_deploy_invokes_deploy(monkeypatch):
     assert result.exit_code == 0
     assert called.get("called") is True
 
+
 def test_cli_render_custom_dir(tmp_path, monkeypatch):
     summary = {
         "generated_at": "2025-01-01T00:00:00Z",
