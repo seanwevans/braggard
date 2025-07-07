@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 import json
 import logging
-import os
+from pathlib import Path
 import urllib.request
 from urllib.error import HTTPError, URLError
 
@@ -39,21 +39,27 @@ def collect(
     token: str | None = None,
     include_private: bool | None = None,
     since: str | None = None,
+    data_dir: str | Path | None = None,
 ) -> None:
     """Fetch repository metadata and store raw JSON snapshots.
 
     Parameters mirror the CLI. ``include_private`` only takes effect when a
     ``token`` with appropriate scopes is supplied. ``since`` filters repositories
     by ``pushed_at`` timestamp when provided. ``user`` and ``include_private``
-    default to values from ``braggard.toml`` when omitted.
+    default to values from ``braggard.toml`` when omitted. ``data_dir`` controls
+    where snapshot JSON files are written and defaults to ``paths.data_dir`` in
+    ``braggard.toml``.
     """
-
-    if user is None or include_private is None:
+    cfg: dict[str, dict] = {}
+    if user is None or include_private is None or data_dir is None:
         cfg = load_config()
         if user is None:
             user = cfg.get("user", {}).get("handle")
         if include_private is None:
             include_private = cfg.get("user", {}).get("include_private", False)
+        if data_dir is None:
+            data_dir = cfg.get("paths", {}).get("data_dir", "data")
+    data_dir = Path(data_dir)
     if user is None:
         raise ValueError("user must be provided")
 
@@ -91,8 +97,8 @@ def collect(
     if not include_private:
         repos = [r for r in repos if not r.get("isPrivate")]
 
-    os.makedirs("data", exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    outfile = os.path.join("data", f"{user}-{ts}.json")
+    outfile = data_dir / f"{user}-{ts}.json"
     with open(outfile, "w", encoding="utf-8") as f:
         json.dump(repos, f, indent=2)

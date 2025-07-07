@@ -22,17 +22,29 @@ def main() -> None:
 @click.option("--token", envvar="BRAGGARD_TOKEN")
 @click.option("--include-private", is_flag=True)
 @click.option("--since")
+@click.option("--data-dir", type=click.Path(), help="Directory for snapshot JSON")
 def collect_cmd(
-    user: str, token: str | None, include_private: bool, since: str | None
+    user: str,
+    token: str | None,
+    include_private: bool,
+    since: str | None,
+    data_dir: str | None,
 ) -> None:
     """Fetch data from GitHub."""
-    collect(user=user, token=token, include_private=include_private, since=since)
+    collect(
+        user=user,
+        token=token,
+        include_private=include_private,
+        since=since,
+        data_dir=data_dir,
+    )
 
 
 @main.command()
-def analyze_cmd() -> None:
+@click.option("--data-dir", type=click.Path(), help="Directory with snapshot JSON")
+def analyze_cmd(data_dir: str | None) -> None:
     """Analyze collected data."""
-    analyze()
+    analyze(data_dir=data_dir)
 
 
 @main.command()

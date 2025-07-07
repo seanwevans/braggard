@@ -15,7 +15,7 @@ def test_analyze_creates_summary(tmp_path, monkeypatch):
     (data_dir / "snap.json").write_text(json.dumps(sample))
     monkeypatch.chdir(tmp_path)
 
-    analyzer.analyze()
+    analyzer.analyze(data_dir=data_dir)
 
     summary_file = tmp_path / "summary.json"
     summary = json.loads(summary_file.read_text())
