@@ -6,6 +6,22 @@ from datetime import datetime
 import subprocess
 
 
+def _run(cmd: list[str]) -> subprocess.CompletedProcess:
+    """Execute ``cmd`` and return the result, raising on unexpected failures."""
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        stderr = result.stderr.lower() if result.stderr else ""
+        if cmd[:3] == ["git", "switch", "gh-pages"] and "already on" in stderr:
+            return result
+        if cmd[:2] == ["git", "commit"]:
+            return result
+        raise RuntimeError(
+            f"Command {' '.join(cmd)} failed with code {result.returncode}: {stderr.strip()}"
+        )
+    return result
+
+
 def deploy() -> None:
     """Publish ``docs/`` to the ``gh-pages`` branch.
 
@@ -14,15 +30,12 @@ def deploy() -> None:
     an unchanged tree are ignored.
     """
 
-    subprocess.run(["git", "fetch"], check=True)
-    result = subprocess.run(["git", "switch", "gh-pages"], check=False)
-    if result.returncode != 0:
-        subprocess.run(["git", "switch", "-c", "gh-pages"], check=True)
+    _run(["git", "fetch"])
+    result = subprocess.run(["git", "switch", "gh-pages"], capture_output=True, text=True)
+    if result.returncode != 0 and "already on" not in (result.stderr or "").lower():
+        _run(["git", "switch", "-c", "gh-pages"])
 
-    subprocess.run(["rsync", "-a", "--delete", "docs/", "."], check=True)
-    subprocess.run(["git", "add", "."], check=True)
-    subprocess.run(
-        ["git", "commit", "-m", f"braggard: {datetime.utcnow().date()}"],
-        check=False,
-    )
-    subprocess.run(["git", "push", "origin", "gh-pages"], check=True)
+    _run(["rsync", "-a", "--delete", "docs/", "."])
+    _run(["git", "add", "."])
+    _run(["git", "commit", "-m", f"braggard: {datetime.utcnow().date()}"])
+    _run(["git", "push", "origin", "gh-pages"])
