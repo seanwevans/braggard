@@ -31,7 +31,9 @@ def deploy() -> None:
     """
 
     _run(["git", "fetch"])
-    result = subprocess.run(["git", "switch", "gh-pages"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "switch", "gh-pages"], capture_output=True, text=True
+    )
     if result.returncode != 0 and "already on" not in (result.stderr or "").lower():
         _run(["git", "switch", "-c", "gh-pages"])
 
