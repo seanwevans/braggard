@@ -1,4 +1,5 @@
 import json
+import pytest
 from braggard import renderer
 
 
@@ -17,3 +18,10 @@ def test_render_creates_html(tmp_path, monkeypatch):
     assert html_file.exists()
     content = html_file.read_text()
     assert "Braggard Report" in content
+
+
+def test_render_requires_summary(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(FileNotFoundError, match="Run `braggard analyze` first"):
+        renderer.render()
