@@ -8,6 +8,6 @@ repos:
     hooks:
       - id: pytest
         name: pytest
-        entry: pytest -q
+        entry: python -m pytest -q
         language: system
         pass_filenames: false
