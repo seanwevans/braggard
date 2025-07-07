@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import click
+from braggard import __version__
 
 from .collector import collect
 from .analyzer import analyze
@@ -11,6 +12,7 @@ from .deployer import deploy
 
 
 @click.group()
+@click.version_option(__version__)
 def main() -> None:
     """Braggard command line entry point."""
 
