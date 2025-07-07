@@ -26,4 +26,3 @@ def deploy() -> None:
         check=False,
     )
     subprocess.run(["git", "push", "origin", "gh-pages"], check=True)
-
