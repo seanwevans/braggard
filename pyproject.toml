@@ -12,3 +12,13 @@ dependencies = [
 
 [project.scripts]
 braggard = "braggard.cli:main"
+
+[tool.ruff]
+# Source code directories to lint
+src = ["braggard"]
+
+# Target Python version for linting and formatting
+target-version = "py311"
+
+# Max line length matching project style
+line-length = 88

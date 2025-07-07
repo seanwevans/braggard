@@ -3,7 +3,9 @@ repos:
     rev: v0.4.3
     hooks:
       - id: ruff-format
+        args: ["--config=pyproject.toml"]
       - id: ruff
+        args: ["--config=pyproject.toml"]
   - repo: local
     hooks:
       - id: pytest
