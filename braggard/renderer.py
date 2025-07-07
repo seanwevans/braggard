@@ -40,6 +40,9 @@ HTML_TEMPLATE = Template(
 def render() -> None:
     """Render ``summary.json`` into ``docs/index.html``."""
 
+    if not os.path.exists("summary.json"):
+        raise FileNotFoundError("Run `braggard analyze` first")
+
     with open("summary.json", "r", encoding="utf-8") as f:
         summary = json.load(f)
 
