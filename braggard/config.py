@@ -22,4 +22,5 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
     return {
         "user": data.get("user", {}),
         "metrics": data.get("metrics", {}),
+        "paths": data.get("paths", {}),
     }

@@ -5,3 +5,6 @@ include_private = false
 [metrics]
 ci_pass_window = 100
 commit_history_years = 3
+
+[paths]
+data_dir = "data"

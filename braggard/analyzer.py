@@ -4,15 +4,20 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, timezone
-import glob
 import json
-import os
+from pathlib import Path
+
+from .config import load_config
 
 
-def _load_snapshots() -> list[dict]:
-    """Return a combined list of repositories from ``data/*.json``."""
+def _load_snapshots(data_dir: str | Path | None = None) -> list[dict]:
+    """Return a combined list of repositories from ``data_dir/*.json``."""
+    if data_dir is None:
+        cfg = load_config()
+        data_dir = cfg.get("paths", {}).get("data_dir", "data")
+    data_dir = Path(data_dir)
     repos: list[dict] = []
-    for path in sorted(glob.glob(os.path.join("data", "*.json"))):
+    for path in sorted(data_dir.glob("*.json")):
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         if isinstance(data, list):
@@ -20,14 +25,21 @@ def _load_snapshots() -> list[dict]:
         else:
             repos.extend(data.get("repos", []))
     if not repos:
-        raise FileNotFoundError("No snapshot data found in data/")
+        raise FileNotFoundError(f"No snapshot data found in {data_dir}/")
     return repos
 
 
-def analyze() -> None:
-    """Analyze collected JSON and write ``summary.json``."""
+def analyze(*, data_dir: str | Path | None = None) -> None:
+    """Analyze collected JSON and write ``summary.json``.
 
-    repos = _load_snapshots()
+    Parameters
+    ----------
+    data_dir:
+        Optional directory containing snapshot JSON files. Defaults to the
+        ``paths.data_dir`` value from ``braggard.toml``.
+    """
+
+    repos = _load_snapshots(data_dir)
 
     lang_counter: Counter[str] = Counter()
     total_stars = 0
