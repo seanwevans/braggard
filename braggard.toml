@@ -1,0 +1,7 @@
+[user]
+handle = "your-github-username"
+include_private = false
+
+[metrics]
+ci_pass_window = 100
+commit_history_years = 3
