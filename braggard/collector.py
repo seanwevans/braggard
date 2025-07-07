@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime
 import json
+import logging
 import os
 import urllib.request
+from urllib.error import HTTPError, URLError
 
 
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
@@ -20,8 +22,13 @@ def _request(query: str, variables: dict[str, str | None], token: str | None) ->
     req = urllib.request.Request(
         GITHUB_GRAPHQL_URL, data=payload, headers=headers, method="POST"
     )
-    with urllib.request.urlopen(req) as resp:  # type: ignore[attr-defined]
-        return json.load(resp)
+    try:
+        with urllib.request.urlopen(req) as resp:  # type: ignore[attr-defined]
+            return json.load(resp)
+    except (HTTPError, URLError) as exc:  # pragma: no cover - network errors
+        msg = f"Request to GitHub failed: {exc}"
+        logging.error(msg)
+        raise RuntimeError(msg) from exc
 
 
 def collect(
