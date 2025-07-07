@@ -7,13 +7,11 @@ First off, thanks for taking the time to contribute! 🎉
 * Be nice – follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
 * Use conventional commits (`feat:`, `fix:`, `docs:` …).
 * All new code **must** have unit tests (`pytest`) and type hints (`mypy` clean).
-* Run the formatter (`ruff format`) and linter (`ruff check`) before every push.
+* Run `pre-commit` before every push.
 
 ```bash
 pip install -r requirements-dev.txt
-ruff format .
-ruff check .
-pytest
+pre-commit run --all-files
 ```
 
 ## Workflow
