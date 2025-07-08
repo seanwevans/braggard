@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 from textwrap import dedent
 
 from jinja2 import Template
@@ -37,13 +38,15 @@ HTML_TEMPLATE = Template(
 )
 
 
-def render(output_dir: str = "docs") -> None:
-    """Render ``summary.json`` into ``output_dir/index.html``."""
+def render(
+    output_dir: str = "docs", *, summary_path: str | Path = "summary.json"
+) -> None:
+    """Render ``summary_path`` into ``output_dir/index.html``."""
 
-    if not os.path.exists("summary.json"):
+    if not os.path.exists(summary_path):
         raise FileNotFoundError("Run `braggard analyze` first")
 
-    with open("summary.json", "r", encoding="utf-8") as f:
+    with open(summary_path, "r", encoding="utf-8") as f:
         summary = json.load(f)
 
     os.makedirs(output_dir, exist_ok=True)
