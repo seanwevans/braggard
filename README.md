@@ -36,6 +36,18 @@ braggard deploy   # → pushes docs/ to gh-pages
 
 Or simply enable the supplied **GitHub Action** (`.github/workflows/braggard.yml`) and let it run unattended.
 
+## 📝 Configuration
+
+Braggard reads settings from `braggard.toml`. The file is searched for in
+this order:
+
+1. the path given on the command line or passed to `load_config`
+2. `./braggard.toml` in the current directory
+3. `$XDG_CONFIG_HOME/braggard/braggard.toml` or
+   `~/.config/braggard/braggard.toml`
+
+The first file found is used; otherwise a `FileNotFoundError` is raised.
+
 ---
 
 ## 📚 Docs & meta‑files
