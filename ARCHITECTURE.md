@@ -34,7 +34,7 @@
 
 | Component  | Runs in | Language | Packaged as |
 |------------|---------|----------|-------------|
-| Collector  | local CLI / Action | Python 3.12 (optionally Rust) | `braggard` console script |
+| Collector  | local CLI / Action | Python 3.11+ (optionally Rust) | `braggard` console script |
 | Analyzer   | same    | Python (pandas) | module |
 | Renderer   | same    | Python + Jinja  | module |
 | Deployer   | GitHub Action | Bash | script |
