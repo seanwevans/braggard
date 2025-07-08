@@ -10,6 +10,7 @@ import urllib.request
 from urllib.error import HTTPError, URLError
 
 from .config import load_config
+from . import __version__
 
 
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
@@ -18,7 +19,7 @@ GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
 def _request(query: str, variables: dict[str, str | None], token: str | None) -> dict:
     """Execute a GraphQL request and return the parsed JSON."""
     payload = json.dumps({"query": query, "variables": variables}).encode()
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": "application/json", "User-Agent": f"braggard/{__version__}"}
     if token:
         headers["Authorization"] = f"bearer {token}"
     req = urllib.request.Request(

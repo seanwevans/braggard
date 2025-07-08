@@ -14,6 +14,7 @@ It scans your repositories, extracts rich metrics, and publishes a shareable Git
 | **Beautiful dashboards** | Responsive static site built with Jinja + Chart.js + Tailwind, dark‑mode ready |
 | **Automated deployment** | GitHub Action pushes updates to `gh-pages` nightly or on‑push |
 | **Private‑repo friendly** | Supply a fine‑grained PAT and Braggard can include your private work in aggregate stats |
+| **GitHub‑friendly requests** | Adds `User-Agent: braggard/<version>` to API calls |
 | **Social preview image** | Optional OG image generator so links look great on social media |
 
 ---
