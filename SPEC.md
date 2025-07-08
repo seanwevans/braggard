@@ -13,8 +13,9 @@
 
 ### 2.1 Collector
 
-* **Input** – GitHub username, optional token, CLI flags  
-* **Output** – timestamped raw JSON dump per run  
+* **Input** – GitHub username, optional token, CLI flags
+* **Output** – timestamped raw JSON dump per run
+* Requests send `User-Agent: braggard/<version>`
 * **Data points fetched**  
   * repo name, description, homepage, primaryLanguage  
   * stars, forks, watchers  
