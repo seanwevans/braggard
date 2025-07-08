@@ -33,3 +33,30 @@ def test_request_api_errors_raise(monkeypatch):
 
     with pytest.raises(RuntimeError, match="GitHub API errors"):
         collector._request("query", {}, None)
+
+
+def test_collect_creates_snapshot(tmp_path, monkeypatch):
+    def fake_request(query, variables, token):
+        return {
+            "data": {
+                "user": {
+                    "repositories": {
+                        "nodes": [
+                            {
+                                "name": "demo",
+                                "isPrivate": False,
+                                "pushedAt": "2024-01-01T00:00:00Z",
+                            }
+                        ],
+                        "pageInfo": {"hasNextPage": False},
+                    }
+                }
+            }
+        }
+
+    monkeypatch.setattr(collector, "_request", fake_request)
+
+    collector.collect(user="demo", include_private=True, data_dir=tmp_path)
+
+    files = list(tmp_path.glob("*.json"))
+    assert len(files) == 1
