@@ -56,10 +56,7 @@ def analyze_cmd(data_dir: str | None) -> None:
 )
 def render_cmd(output_dir: str) -> None:
     """Render static site."""
-    if output_dir == "docs":
-        render()
-    else:
-        render(output_dir=output_dir)
+    render(output_dir=output_dir)
 
 
 @main.command()
