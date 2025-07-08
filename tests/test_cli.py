@@ -38,9 +38,10 @@ def test_cli_analyze_invokes_analyze(monkeypatch):
 def test_cli_render_invokes_render(monkeypatch):
     called = {}
 
-    def fake_render(output_dir="docs"):
+    def fake_render(*, output_dir="docs", summary_path="summary.json"):
         called["called"] = True
         called["output_dir"] = output_dir
+        called["summary_path"] = summary_path
 
     monkeypatch.setattr("braggard.cli.render", fake_render)
     runner = CliRunner()
@@ -48,6 +49,7 @@ def test_cli_render_invokes_render(monkeypatch):
     assert result.exit_code == 0
     assert called.get("called") is True
     assert called.get("output_dir") == "docs"
+    assert called.get("summary_path") == "summary.json"
 
 
 def test_cli_deploy_invokes_deploy(monkeypatch):

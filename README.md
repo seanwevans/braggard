@@ -34,6 +34,9 @@ braggard render
 braggard deploy   # → pushes docs/ to gh-pages
 ```
 
+The `braggard render` command accepts `--summary-path` to load a summary JSON
+from a custom location instead of the default `summary.json`.
+
 Or simply enable the supplied **GitHub Action** (`.github/workflows/braggard.yml`) and let it run unattended.
 
 ## 📝 Configuration
