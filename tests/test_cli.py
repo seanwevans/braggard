@@ -22,6 +22,20 @@ def test_cli_collect_invokes_collect(monkeypatch):
     assert called.get("called") is True
 
 
+def test_cli_collect_full_history(monkeypatch):
+    called = {}
+
+    def fake_collect(**kwargs):
+        called.update(kwargs)
+
+    monkeypatch.setattr("braggard.cli.collect", fake_collect)
+    runner = CliRunner()
+    result = runner.invoke(main, ["collect", "demo", "--full-history"])
+
+    assert result.exit_code == 0
+    assert called.get("full_history") is True
+
+
 def test_cli_analyze_invokes_analyze(monkeypatch):
     called = {}
 

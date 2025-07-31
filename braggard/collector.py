@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import logging
 from pathlib import Path
@@ -46,6 +46,7 @@ def collect(
     include_private: bool | None = None,
     since: str | None = None,
     data_dir: str | Path | None = None,
+    full_history: bool = False,
 ) -> None:
     """Fetch repository metadata and store raw JSON snapshots.
 
@@ -55,6 +56,9 @@ def collect(
     default to values from ``braggard.toml`` when omitted. ``data_dir`` controls
     where snapshot JSON files are written and defaults to ``paths.data_dir`` in
     ``braggard.toml``.
+    ``full_history`` determines whether commit counts span the entire
+    repository lifetime instead of the default ``metrics.commit_history_years``
+    window from ``braggard.toml``.
     """
     cfg: dict[str, dict] = {}
     if user is None or include_private is None or data_dir is None:
@@ -102,6 +106,52 @@ def collect(
         repos = [r for r in repos if r.get("pushedAt") and r["pushedAt"] >= since]
     if not include_private:
         repos = [r for r in repos if not r.get("isPrivate")]
+
+    # fetch commit history counts
+    history_years = 0
+    if not full_history:
+        history_years = int(cfg.get("metrics", {}).get("commit_history_years", 3))
+
+    commit_query_template = """
+    query($login: String!, $repo: String!%s) {
+      repository(owner: $login, name: $repo) {
+        defaultBranchRef {
+          target {
+            ... on Commit {
+              history(first: 0%s) { totalCount }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    for repo in repos:
+        since_ts = None
+        extra_var = ""
+        if history_years > 0:
+            cutoff = datetime.utcnow() - timedelta(days=365 * history_years)
+            since_ts = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
+            extra_var = ", $since: GitTimestamp"
+        commit_query = commit_query_template % (
+            extra_var,
+            ", since: $since" if since_ts else "",
+        )
+        variables = {"login": user, "repo": repo.get("name")}
+        if since_ts:
+            variables["since"] = since_ts
+        try:
+            cdata = _request(commit_query, variables, token)
+            repo["commitCount"] = (
+                cdata.get("data", {})
+                .get("repository", {})
+                .get("defaultBranchRef", {})
+                .get("target", {})
+                .get("history", {})
+                .get("totalCount", 0)
+            )
+        except RuntimeError:
+            repo["commitCount"] = 0
 
     data_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
