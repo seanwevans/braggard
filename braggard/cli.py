@@ -23,12 +23,16 @@ def main() -> None:
 @click.option("--include-private", is_flag=True)
 @click.option("--since")
 @click.option("--data-dir", type=click.Path(), help="Directory for snapshot JSON")
+@click.option(
+    "--full-history", is_flag=True, help="Collect commit counts for entire repo history"
+)
 def collect_cmd(
     user: str,
     token: str | None,
     include_private: bool,
     since: str | None,
     data_dir: str | None,
+    full_history: bool,
 ) -> None:
     """Fetch data from GitHub."""
     collect(
@@ -37,6 +41,7 @@ def collect_cmd(
         include_private=include_private,
         since=since,
         data_dir=data_dir,
+        full_history=full_history,
     )
 
 
