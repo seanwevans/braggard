@@ -50,11 +50,18 @@ def analyze(*, data_dir: str | Path | None = None) -> None:
         if name:
             lang_counter[str(name)] += 1
 
+    repo_summaries = []
+    for r in repos:
+        entry = {"name": r.get("name"), "stars": r.get("stargazerCount", 0)}
+        statuses = r.get("ciStatuses") or []
+        if statuses:
+            success = sum(1 for s in statuses if s == "SUCCESS")
+            entry["ci_pass_rate"] = success / len(statuses)
+        repo_summaries.append(entry)
+
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "repos": [
-            {"name": r.get("name"), "stars": r.get("stargazerCount", 0)} for r in repos
-        ],
+        "repos": repo_summaries,
         "aggregate": {
             "repo_count": len(repos),
             "total_stars": total_stars,
