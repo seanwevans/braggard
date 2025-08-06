@@ -126,6 +126,22 @@ def collect(
     }
     """
 
+    status_query = """
+    query($login: String!, $repo: String!) {
+      repository(owner: $login, name: $repo) {
+        defaultBranchRef {
+          target {
+            ... on Commit {
+              checkSuites(first: 20) {
+                nodes { conclusion }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
     for repo in repos:
         since_ts = None
         extra_var = ""
@@ -152,6 +168,24 @@ def collect(
             )
         except RuntimeError:
             repo["commitCount"] = 0
+
+        try:
+            sdata = _request(
+                status_query, {"login": user, "repo": repo.get("name")}, token
+            )
+            nodes = (
+                sdata.get("data", {})
+                .get("repository", {})
+                .get("defaultBranchRef", {})
+                .get("target", {})
+                .get("checkSuites", {})
+                .get("nodes", [])
+            )
+            repo["ciStatuses"] = [
+                n.get("conclusion") for n in nodes if n.get("conclusion")
+            ]
+        except RuntimeError:
+            repo["ciStatuses"] = []
 
     data_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")

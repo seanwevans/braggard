@@ -100,3 +100,50 @@ def test_collect_full_history_includes_commits(tmp_path, monkeypatch):
     files = list(tmp_path.glob("*.json"))
     data = json.loads(files[0].read_text())
     assert data[0]["commitCount"] == 7
+
+
+def test_collect_includes_ci_statuses(tmp_path, monkeypatch):
+    def fake_request(query, variables, token):
+        if "repositories(" in query:
+            return {
+                "data": {
+                    "user": {
+                        "repositories": {
+                            "nodes": [
+                                {
+                                    "name": "demo",
+                                    "isPrivate": False,
+                                    "pushedAt": "2024-01-01T00:00:00Z",
+                                }
+                            ],
+                            "pageInfo": {"hasNextPage": False},
+                        }
+                    }
+                }
+            }
+        if "checkSuites" in query:
+            return {
+                "data": {
+                    "repository": {
+                        "defaultBranchRef": {
+                            "target": {
+                                "checkSuites": {
+                                    "nodes": [
+                                        {"conclusion": "SUCCESS"},
+                                        {"conclusion": "FAILURE"},
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(collector, "_request", fake_request)
+
+    collector.collect(user="demo", include_private=True, data_dir=tmp_path)
+
+    files = list(tmp_path.glob("*.json"))
+    data = json.loads(files[0].read_text())
+    assert data[0]["ciStatuses"] == ["SUCCESS", "FAILURE"]

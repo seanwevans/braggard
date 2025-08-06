@@ -1,4 +1,7 @@
 import json
+
+import pytest
+
 from braggard import analyzer
 
 
@@ -10,6 +13,7 @@ def test_analyze_creates_summary(tmp_path, monkeypatch):
             "name": "demo",
             "stargazerCount": 5,
             "primaryLanguage": {"name": "Python"},
+            "ciStatuses": ["SUCCESS", "FAILURE", "SUCCESS"],
         }
     ]
     (data_dir / "snap.json").write_text(json.dumps(sample))
@@ -22,3 +26,4 @@ def test_analyze_creates_summary(tmp_path, monkeypatch):
     assert summary["aggregate"]["repo_count"] == 1
     assert summary["aggregate"]["total_stars"] == 5
     assert summary["aggregate"]["languages"]["Python"] == 1
+    assert summary["repos"][0]["ci_pass_rate"] == pytest.approx(2 / 3)
