@@ -74,7 +74,9 @@ def analyze_cmd(data_dir: str | None) -> None:
 )
 def render_cmd(output_dir: str, summary_path: str, output_format: str) -> None:
     """Render static site."""
-    render(output_dir=output_dir, summary_path=summary_path, output_format=output_format)
+    render(
+        output_dir=output_dir, summary_path=summary_path, output_format=output_format
+    )
 
 
 @main.command()

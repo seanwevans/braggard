@@ -52,7 +52,9 @@ def test_cli_analyze_invokes_analyze(monkeypatch):
 def test_cli_render_invokes_render(monkeypatch):
     called = {}
 
-    def fake_render(*, output_dir="docs", summary_path="summary.json", output_format="html"):
+    def fake_render(
+        *, output_dir="docs", summary_path="summary.json", output_format="html"
+    ):
         called["called"] = True
         called["output_dir"] = output_dir
         called["summary_path"] = summary_path
