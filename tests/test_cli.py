@@ -52,10 +52,11 @@ def test_cli_analyze_invokes_analyze(monkeypatch):
 def test_cli_render_invokes_render(monkeypatch):
     called = {}
 
-    def fake_render(*, output_dir="docs", summary_path="summary.json"):
+    def fake_render(*, output_dir="docs", summary_path="summary.json", output_format="html"):
         called["called"] = True
         called["output_dir"] = output_dir
         called["summary_path"] = summary_path
+        called["output_format"] = output_format
 
     monkeypatch.setattr("braggard.cli.render", fake_render)
     runner = CliRunner()
@@ -64,6 +65,7 @@ def test_cli_render_invokes_render(monkeypatch):
     assert called.get("called") is True
     assert called.get("output_dir") == "docs"
     assert called.get("summary_path") == "summary.json"
+    assert called.get("output_format") == "html"
 
 
 def test_cli_deploy_invokes_deploy(monkeypatch):
@@ -93,3 +95,19 @@ def test_cli_render_custom_dir(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert (tmp_path / "public" / "index.html").exists()
+
+
+def test_cli_render_custom_format(tmp_path, monkeypatch):
+    summary = {
+        "generated_at": "2025-01-01T00:00:00Z",
+        "repos": [],
+        "aggregate": {"repo_count": 0, "total_stars": 0, "languages": {}},
+    }
+    (tmp_path / "summary.json").write_text(json.dumps(summary))
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["render", "--format", "markdown"])
+
+    assert result.exit_code == 0
+    assert (tmp_path / "docs" / "index.md").exists()
