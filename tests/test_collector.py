@@ -147,3 +147,82 @@ def test_collect_includes_ci_statuses(tmp_path, monkeypatch):
     files = list(tmp_path.glob("*.json"))
     data = json.loads(files[0].read_text())
     assert data[0]["ciStatuses"] == ["SUCCESS", "FAILURE"]
+
+
+def test_collect_dispatches_parallel_requests(tmp_path, monkeypatch):
+    calls: list[tuple[str, str]] = []
+
+    def fake_request(query, variables, token):
+        repo = variables.get("repo")
+        if "repositories(" in query:
+            return {
+                "data": {
+                    "user": {
+                        "repositories": {
+                            "nodes": [
+                                {
+                                    "name": "one",
+                                    "isPrivate": False,
+                                    "pushedAt": "2024-01-01T00:00:00Z",
+                                },
+                                {
+                                    "name": "two",
+                                    "isPrivate": False,
+                                    "pushedAt": "2024-01-01T00:00:00Z",
+                                },
+                            ],
+                            "pageInfo": {"hasNextPage": False},
+                        }
+                    }
+                }
+            }
+        if "history(" in query:
+            calls.append(("commit", repo))
+            return {
+                "data": {
+                    "repository": {
+                        "defaultBranchRef": {"target": {"history": {"totalCount": 1}}}
+                    }
+                }
+            }
+        if "checkSuites" in query:
+            calls.append(("status", repo))
+            return {
+                "data": {
+                    "repository": {
+                        "defaultBranchRef": {
+                            "target": {"checkSuites": {"nodes": []}}
+                        }
+                    }
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(collector, "_request", fake_request)
+
+    submissions: list[tuple] = []
+
+    class DummyExecutor:
+        def submit(self, fn, *args, **kwargs):
+            submissions.append(args)
+            class DummyFuture:
+                def result(self):
+                    return fn(*args, **kwargs)
+
+            return DummyFuture()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(collector, "ThreadPoolExecutor", lambda: DummyExecutor())
+
+    collector.collect(user="demo", include_private=True, data_dir=tmp_path)
+
+    assert len(submissions) == 4
+    assert calls.count(("commit", "one")) == 1
+    assert calls.count(("commit", "two")) == 1
+    assert calls.count(("status", "one")) == 1
+    assert calls.count(("status", "two")) == 1
