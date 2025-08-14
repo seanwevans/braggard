@@ -10,7 +10,7 @@ import urllib.request
 from urllib.error import HTTPError, URLError
 from concurrent.futures import ThreadPoolExecutor
 
-from .config import load_config
+from .config import Config, load_config
 from . import __version__
 
 
@@ -61,15 +61,15 @@ def collect(
     repository lifetime instead of the default ``metrics.commit_history_years``
     window from ``braggard.toml``.
     """
-    cfg: dict[str, dict] = {}
+    cfg: Config | None = None
     if user is None or include_private is None or data_dir is None:
         cfg = load_config()
         if user is None:
-            user = cfg.get("user", {}).get("handle")
+            user = cfg.user.handle
         if include_private is None:
-            include_private = cfg.get("user", {}).get("include_private", False)
+            include_private = cfg.user.include_private
         if data_dir is None:
-            data_dir = cfg.get("paths", {}).get("data_dir", "data")
+            data_dir = cfg.paths.data_dir
     data_dir = Path(data_dir)
     if user is None:
         raise ValueError("user must be provided")
@@ -111,7 +111,9 @@ def collect(
     # fetch commit history counts
     history_years = 0
     if not full_history:
-        history_years = int(cfg.get("metrics", {}).get("commit_history_years", 3))
+        if cfg is None:
+            cfg = load_config()
+        history_years = cfg.metrics.commit_history_years
 
     commit_query_template = """
     query($login: String!, $repo: String!%s) {
