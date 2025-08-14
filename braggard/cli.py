@@ -47,9 +47,15 @@ def collect_cmd(
 
 @main.command()
 @click.option("--data-dir", type=click.Path(), help="Directory with snapshot JSON")
-def analyze_cmd(data_dir: str | None) -> None:
+@click.option(
+    "--summary-path",
+    default="summary.json",
+    type=click.Path(),
+    help="Path to summary JSON",
+)
+def analyze_cmd(data_dir: str | None, summary_path: str) -> None:
     """Analyze collected data."""
-    analyze(data_dir=data_dir)
+    analyze(data_dir=data_dir, summary_path=summary_path)
 
 
 @main.command()
