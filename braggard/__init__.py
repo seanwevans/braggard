@@ -8,10 +8,11 @@ __all__ = [
     "render",
     "deploy",
     "load_config",
+    "Config",
 ]
 
 from .collector import collect
 from .analyzer import analyze
 from .renderer import render
 from .deployer import deploy
-from .config import load_config
+from .config import Config, load_config

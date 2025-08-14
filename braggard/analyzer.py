@@ -14,7 +14,7 @@ def _load_snapshots(data_dir: str | Path | None = None) -> list[dict]:
     """Return a combined list of repositories from ``data_dir/*.json``."""
     if data_dir is None:
         cfg = load_config()
-        data_dir = cfg.get("paths", {}).get("data_dir", "data")
+        data_dir = cfg.paths.data_dir
     data_dir = Path(data_dir)
     repos: list[dict] = []
     for path in sorted(data_dir.glob("*.json")):
