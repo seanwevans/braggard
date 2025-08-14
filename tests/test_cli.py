@@ -113,3 +113,34 @@ def test_cli_render_custom_format(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert (tmp_path / "docs" / "index.md").exists()
+
+
+def test_cli_analyze_custom_summary_path(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    sample = [
+        {
+            "name": "demo",
+            "stargazerCount": 5,
+            "primaryLanguage": {"name": "Python"},
+            "ciStatuses": ["SUCCESS", "FAILURE", "SUCCESS"],
+        }
+    ]
+    (data_dir / "snap.json").write_text(json.dumps(sample))
+    monkeypatch.chdir(tmp_path)
+
+    summary_path = tmp_path / "custom.json"
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "analyze",
+            "--data-dir",
+            str(data_dir),
+            "--summary-path",
+            str(summary_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert summary_path.exists()

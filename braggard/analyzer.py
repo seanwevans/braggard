@@ -29,14 +29,19 @@ def _load_snapshots(data_dir: str | Path | None = None) -> list[dict]:
     return repos
 
 
-def analyze(*, data_dir: str | Path | None = None) -> None:
-    """Analyze collected JSON and write ``summary.json``.
+def analyze(
+    *, data_dir: str | Path | None = None, summary_path: str | Path | None = None
+) -> None:
+    """Analyze collected JSON and write a summary.
 
     Parameters
     ----------
     data_dir:
         Optional directory containing snapshot JSON files. Defaults to the
         ``paths.data_dir`` value from ``braggard.toml``.
+    summary_path:
+        Optional path to write the resulting ``summary.json``. Defaults to
+        ``summary.json`` in the current working directory.
     """
 
     repos = _load_snapshots(data_dir)
@@ -69,5 +74,7 @@ def analyze(*, data_dir: str | Path | None = None) -> None:
         },
     }
 
-    with open("summary.json", "w", encoding="utf-8") as f:
+    out_path = Path(summary_path or "summary.json")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
