@@ -190,9 +190,7 @@ def test_collect_dispatches_parallel_requests(tmp_path, monkeypatch):
             return {
                 "data": {
                     "repository": {
-                        "defaultBranchRef": {
-                            "target": {"checkSuites": {"nodes": []}}
-                        }
+                        "defaultBranchRef": {"target": {"checkSuites": {"nodes": []}}}
                     }
                 }
             }
@@ -205,6 +203,7 @@ def test_collect_dispatches_parallel_requests(tmp_path, monkeypatch):
     class DummyExecutor:
         def submit(self, fn, *args, **kwargs):
             submissions.append(args)
+
             class DummyFuture:
                 def result(self):
                     return fn(*args, **kwargs)

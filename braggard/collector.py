@@ -174,9 +174,7 @@ def collect(
 
     def fetch_ci_statuses(repo_name: str) -> list[str]:
         try:
-            sdata = _request(
-                status_query, {"login": user, "repo": repo_name}, token
-            )
+            sdata = _request(status_query, {"login": user, "repo": repo_name}, token)
             nodes = (
                 sdata.get("data", {})
                 .get("repository", {})
@@ -195,8 +193,7 @@ def collect(
             for repo in repos
         }
         status_futures = {
-            executor.submit(fetch_ci_statuses, repo.get("name")): repo
-            for repo in repos
+            executor.submit(fetch_ci_statuses, repo.get("name")): repo for repo in repos
         }
         for future, repo in commit_futures.items():
             repo["commitCount"] = future.result()

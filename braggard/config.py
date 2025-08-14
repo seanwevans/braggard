@@ -84,9 +84,7 @@ def load_config(path: str | Path | None = None) -> Config:
             metrics_data = data.get("metrics") or {}
             metrics = MetricsConfig(
                 ci_pass_window=int(metrics_data.get("ci_pass_window", 100)),
-                commit_history_years=int(
-                    metrics_data.get("commit_history_years", 3)
-                ),
+                commit_history_years=int(metrics_data.get("commit_history_years", 3)),
             )
 
             paths_data = data.get("paths") or {}
