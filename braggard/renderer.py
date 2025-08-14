@@ -7,73 +7,92 @@ import os
 from pathlib import Path
 from textwrap import dedent
 
-from jinja2 import Template
+from jinja2 import Environment, DictLoader
 
 
-HTML_TEMPLATE = Template(
-    dedent(
-        """
-        <!DOCTYPE html>
-        <html lang="en">
-        <meta charset="utf-8" />
-        <title>Braggard Report</title>
-        <body>
-        <h1>Braggard Report</h1>
-        <p>Generated at {{ summary.generated_at }}</p>
-        <h2>Aggregates</h2>
-        <ul>
-          <li>Total repos: {{ summary.aggregate.repo_count }}</li>
-          <li>Total stars: {{ summary.aggregate.total_stars }}</li>
-        </ul>
-        <h2>Languages</h2>
-        <ul>
-        {% for lang, count in summary.aggregate.languages.items() %}
-          <li>{{ lang }}: {{ count }}</li>
-        {% endfor %}
-        </ul>
-        </body>
-        </html>
-        """
-    )
-)
+ENV = Environment(
+    loader=DictLoader(
+        {
+            "html": dedent(
+                """
+                <!DOCTYPE html>
+                <html lang="en">
+                <meta charset="utf-8" />
+                <title>Braggard Report</title>
+                <body>
+                <h1>Braggard Report</h1>
+                <p>Generated at {{ summary.generated_at }}</p>
+                <h2>Aggregates</h2>
+                <ul>
+                  <li>Total repos: {{ summary.aggregate.repo_count }}</li>
+                  <li>Total stars: {{ summary.aggregate.total_stars }}</li>
+                </ul>
+                <h2>Languages</h2>
+                <ul>
+                {% for lang, count in summary.aggregate.languages.items() %}
+                  <li>{{ lang }}: {{ count }}</li>
+                {% endfor %}
+                </ul>
+                {% if summary.repos %}
+                <h2>Repositories</h2>
+                <ul>
+                {% for repo in summary.repos %}
+                  <li>{{ repo.name }}: {{ repo.stars }}</li>
+                {% endfor %}
+                </ul>
+                {% endif %}
+                </body>
+                </html>
+                """
+            ),
+            "markdown": dedent(
+                """
+                # Braggard Report
 
-MARKDOWN_TEMPLATE = Template(
-    dedent(
-        """
-        # Braggard Report
+                Generated at {{ summary.generated_at }}
 
-        Generated at {{ summary.generated_at }}
+                ## Aggregates
 
-        ## Aggregates
+                * Total repos: {{ summary.aggregate.repo_count }}
+                * Total stars: {{ summary.aggregate.total_stars }}
 
-        * Total repos: {{ summary.aggregate.repo_count }}
-        * Total stars: {{ summary.aggregate.total_stars }}
+                ## Languages
+                {% for lang, count in summary.aggregate.languages.items() %}
+                * {{ lang }}: {{ count }}
+                {% endfor %}
+                {% if summary.repos %}
+                ## Repositories
+                {% for repo in summary.repos %}
+                * {{ repo.name }}: {{ repo.stars }}
+                {% endfor %}
+                {% endif %}
+                """
+            ),
+            "text": dedent(
+                """
+                Braggard Report
 
-        ## Languages
-        {% for lang, count in summary.aggregate.languages.items() %}
-        * {{ lang }}: {{ count }}
-        {% endfor %}
-        """
-    )
-)
+                Generated at {{ summary.generated_at }}
 
-TEXT_TEMPLATE = Template(
-    dedent(
-        """
-        Braggard Report
+                Aggregates
+                - Total repos: {{ summary.aggregate.repo_count }}
+                - Total stars: {{ summary.aggregate.total_stars }}
 
-        Generated at {{ summary.generated_at }}
-
-        Aggregates
-        - Total repos: {{ summary.aggregate.repo_count }}
-        - Total stars: {{ summary.aggregate.total_stars }}
-
-        Languages
-        {% for lang, count in summary.aggregate.languages.items() %}
-        - {{ lang }}: {{ count }}
-        {% endfor %}
-        """
-    )
+                Languages
+                {% for lang, count in summary.aggregate.languages.items() %}
+                - {{ lang }}: {{ count }}
+                {% endfor %}
+                {% if summary.repos %}
+                Repositories
+                {% for repo in summary.repos %}
+                - {{ repo.name }}: {{ repo.stars }}
+                {% endfor %}
+                {% endif %}
+                """
+            ),
+        }
+    ),
+    autoescape=True,
 )
 
 
@@ -98,18 +117,17 @@ def render(
     os.makedirs(output_dir, exist_ok=True)
 
     output_format = output_format.lower()
-    if output_format == "html":
-        template = HTML_TEMPLATE
-        filename = "index.html"
-    elif output_format == "markdown":
-        template = MARKDOWN_TEMPLATE
-        filename = "index.md"
-    elif output_format == "text":
-        template = TEXT_TEMPLATE
-        filename = "report.txt"
-    else:
+    mapping = {
+        "html": ("html", "index.html"),
+        "markdown": ("markdown", "index.md"),
+        "text": ("text", "report.txt"),
+    }
+    try:
+        template_name, filename = mapping[output_format]
+    except KeyError:  # pragma: no cover - handled by ValueError below
         raise ValueError(f"Unsupported format: {output_format}")
 
+    template = ENV.get_template(template_name)
     output = template.render(summary=summary)
     with open(os.path.join(output_dir, filename), "w", encoding="utf-8") as f:
         f.write(output)

@@ -87,3 +87,23 @@ def test_render_text_format(tmp_path, monkeypatch):
 
     txt_file = tmp_path / "docs" / "report.txt"
     assert txt_file.exists()
+
+
+def test_repo_name_is_escaped(tmp_path, monkeypatch):
+    summary = {
+        "generated_at": "2025-01-01T00:00:00Z",
+        "repos": [{"name": "<script>alert(1)</script>", "stars": 0}],
+        "aggregate": {
+            "repo_count": 1,
+            "total_stars": 0,
+            "languages": {},
+        },
+    }
+    (tmp_path / "summary.json").write_text(json.dumps(summary))
+    monkeypatch.chdir(tmp_path)
+
+    renderer.render()
+
+    content = (tmp_path / "docs" / "index.html").read_text()
+    assert "<script>" not in content
+    assert "&lt;script&gt;" in content
