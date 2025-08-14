@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 import urllib.request
 from urllib.error import HTTPError, URLError
+from concurrent.futures import ThreadPoolExecutor
 
 from .config import load_config
 from . import __version__
@@ -141,24 +142,24 @@ def collect(
       }
     }
     """
+    since_ts: str | None = None
+    extra_var = ""
+    if history_years > 0:
+        cutoff = datetime.utcnow() - timedelta(days=365 * history_years)
+        since_ts = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
+        extra_var = ", $since: GitTimestamp"
+    commit_query = commit_query_template % (
+        extra_var,
+        ", since: $since" if since_ts else "",
+    )
 
-    for repo in repos:
-        since_ts = None
-        extra_var = ""
-        if history_years > 0:
-            cutoff = datetime.utcnow() - timedelta(days=365 * history_years)
-            since_ts = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
-            extra_var = ", $since: GitTimestamp"
-        commit_query = commit_query_template % (
-            extra_var,
-            ", since: $since" if since_ts else "",
-        )
-        variables = {"login": user, "repo": repo.get("name")}
+    def fetch_commit_count(repo_name: str) -> int:
+        variables = {"login": user, "repo": repo_name}
         if since_ts:
             variables["since"] = since_ts
         try:
             cdata = _request(commit_query, variables, token)
-            repo["commitCount"] = (
+            return (
                 cdata.get("data", {})
                 .get("repository", {})
                 .get("defaultBranchRef", {})
@@ -167,11 +168,12 @@ def collect(
                 .get("totalCount", 0)
             )
         except RuntimeError:
-            repo["commitCount"] = 0
+            return 0
 
+    def fetch_ci_statuses(repo_name: str) -> list[str]:
         try:
             sdata = _request(
-                status_query, {"login": user, "repo": repo.get("name")}, token
+                status_query, {"login": user, "repo": repo_name}, token
             )
             nodes = (
                 sdata.get("data", {})
@@ -181,11 +183,23 @@ def collect(
                 .get("checkSuites", {})
                 .get("nodes", [])
             )
-            repo["ciStatuses"] = [
-                n.get("conclusion") for n in nodes if n.get("conclusion")
-            ]
+            return [n.get("conclusion") for n in nodes if n.get("conclusion")]
         except RuntimeError:
-            repo["ciStatuses"] = []
+            return []
+
+    with ThreadPoolExecutor() as executor:
+        commit_futures = {
+            executor.submit(fetch_commit_count, repo.get("name")): repo
+            for repo in repos
+        }
+        status_futures = {
+            executor.submit(fetch_ci_statuses, repo.get("name")): repo
+            for repo in repos
+        }
+        for future, repo in commit_futures.items():
+            repo["commitCount"] = future.result()
+        for future, repo in status_futures.items():
+            repo["ciStatuses"] = future.result()
 
     data_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
