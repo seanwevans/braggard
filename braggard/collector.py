@@ -191,12 +191,10 @@ def collect(
 
     with ThreadPoolExecutor() as executor:
         commit_futures = {
-            executor.submit(fetch_commit_count, repo["name"]): repo
-            for repo in repos
+            executor.submit(fetch_commit_count, repo["name"]): repo for repo in repos
         }
         status_futures = {
-            executor.submit(fetch_ci_statuses, repo["name"]): repo
-            for repo in repos
+            executor.submit(fetch_ci_statuses, repo["name"]): repo for repo in repos
         }
         for commit_future, repo in commit_futures.items():
             repo["commitCount"] = commit_future.result()
