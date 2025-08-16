@@ -9,6 +9,7 @@ from pathlib import Path
 import urllib.request
 from urllib.error import HTTPError, URLError
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 from .config import Config, load_config
 from . import __version__
@@ -93,7 +94,7 @@ def collect(
     }
     """
 
-    repos: list[dict] = []
+    repos: list[dict[str, Any]] = []
     after = None
     while True:
         data = _request(repo_query, {"login": user, "after": after}, token)
@@ -156,7 +157,7 @@ def collect(
     )
 
     def fetch_commit_count(repo_name: str) -> int:
-        variables = {"login": user, "repo": repo_name}
+        variables: dict[str, str | None] = {"login": user, "repo": repo_name}
         if since_ts:
             variables["since"] = since_ts
         try:
@@ -174,7 +175,8 @@ def collect(
 
     def fetch_ci_statuses(repo_name: str) -> list[str]:
         try:
-            sdata = _request(status_query, {"login": user, "repo": repo_name}, token)
+            variables: dict[str, str | None] = {"login": user, "repo": repo_name}
+            sdata = _request(status_query, variables, token)
             nodes = (
                 sdata.get("data", {})
                 .get("repository", {})
@@ -189,16 +191,17 @@ def collect(
 
     with ThreadPoolExecutor() as executor:
         commit_futures = {
-            executor.submit(fetch_commit_count, repo.get("name")): repo
+            executor.submit(fetch_commit_count, repo["name"]): repo
             for repo in repos
         }
         status_futures = {
-            executor.submit(fetch_ci_statuses, repo.get("name")): repo for repo in repos
+            executor.submit(fetch_ci_statuses, repo["name"]): repo
+            for repo in repos
         }
-        for future, repo in commit_futures.items():
-            repo["commitCount"] = future.result()
-        for future, repo in status_futures.items():
-            repo["ciStatuses"] = future.result()
+        for commit_future, repo in commit_futures.items():
+            repo["commitCount"] = commit_future.result()
+        for status_future, repo in status_futures.items():
+            repo["ciStatuses"] = status_future.result()
 
     data_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
